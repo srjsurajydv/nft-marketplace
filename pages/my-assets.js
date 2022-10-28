@@ -13,41 +13,86 @@ import Market from '../artifacts/contracts/NFTMarket.sol/NFTMarket.json'
 export default function MyAssets() {
     const [nfts, setNfts] = useState([])
     const [loadingState, setLoadingState] = useState('not-loaded')
-    // const router = useRouter()
+
     useEffect(() => {
         loadNFTs()
     }, [])
 
+    // useEffect(() => {
+    //     if (window.ethereum) {
+       
+    //       window.ethereum.on("accountsChanged", () => {
+    //         window.location.reload();
+    //       });
+    //     }
+    //   });
+
     async function loadNFTs() {
         const web3Modal = new Web3Modal()
         const connection = await web3Modal.connect()
-        console.log("hh2")
         const provider = new ethers.providers.Web3Provider(connection)
-        console.log("hh3")
         const signer = provider.getSigner()
-        console.log("hh4")
         const marketContract = new ethers.Contract(nftmarketaddress, Market.abi, signer)
         const tokenContract = new ethers.Contract(nftaddress, NFT.abi, provider)
         const data = await marketContract.fetchMyNFTs()
-
         const items = await Promise.all(data.map(async i => {
-            const tokenURI = await tokenContract.tokenURI(i.tokenId)
-            const meta = await axios.get(tokenURI)
+            var tokenUri = await tokenContract.tokenURI(i.tokenId)
+            const tmp = tokenUri.split("//")
+            tokenUri = 'https://ipfs.io/ipfs/' + tmp[1]
+            const meta = await fetch(tokenUri)
+            const json = await meta.json()
             let price = ethers.utils.formatUnits(i.price.toString(), 'ether')
+            const imgLink = json.image
+            const tmp1 = imgLink.split("//")
+            const imgurl = 'https://ipfs.io/ipfs/' + tmp1[1]
+            const imageURL = await axios.get(imgurl)
             let item = {
-                price,
-                tokenId: i.tokenId.toNumber(),
-                seller: i.seller,
-                owner: i.owner,
-                image: meta.data.image,
-                name: meta.data.name,
-                description: meta.data.description,
+              price,
+              tokenId: i.tokenId.toNumber(),
+              seller: i.seller,
+              owner: i.owner,
+              image: imageURL.data,
+              name: json.name,
+              description: json.description,
             }
             return item
-        }))
+          }))
+          
         setNfts(items)
         setLoadingState('loaded')
     }
+
+    // async function createSale(tokenID) {
+    //     const web3Modal = new Web3Modal()
+    //     const connection = await web3Modal.connect()
+    //     const provider = new ethers.providers.Web3Provider(connection)
+    //     const signer = provider.getSigner()
+    //     const marketContract = new ethers.Contract(nftmarketaddress, Market.abi, signer)
+    //     const tokenContract = new ethers.Contract(nftaddress, NFT.abi, provider)
+    //     const url = await tokenContract.tokenURI(tokenID)
+    //     try {
+    //         let contract = new ethers.Contract(nftaddress, NFT.abi, signer)
+    //         let transaction = await contract.createToken(url)
+    //         let tx = await transaction.wait()
+
+    //         let tokenId = tokenID
+
+    //         const price = ethers.utils.parseUnits("0.0034", 'ether')
+
+    //         contract = new ethers.Contract(nftmarketaddress, Market.abi, signer)
+    //         let listingPrice = await contract.getListingPrice()
+    //         listingPrice = listingPrice.toString()
+
+    //         transaction = await contract.createMarketItem(
+    //             nftaddress, tokenId, price, { value: listingPrice }
+    //         )
+    //         await transaction.wait()
+    //         loadNFTs()
+    //     } catch (error) {
+    //         console.log(error)
+    //         alert("Transaction Failed \nPlease try again.")
+    //     }
+    // }
 
     if (loadingState === 'loaded' && !nfts.length) return (
         <h1 className="py-10 px-20 text-3xl text-white" style={{ backgroundColor: '#1a1a1a', minHeight: '530px' }}>No NFTs owned</h1>
@@ -60,7 +105,7 @@ export default function MyAssets() {
                     {
                         nfts.map((nft, i) => (
                             <div key={i} className="border shadow rounded-xl overflow-hidden">
-                                <img src={nft.image} className="rounded" />
+                                <img src={nft.image} className="rounded" width="500" height="500" />
                                 <div className="p-4">
                                     <p style={{ height: '32px' }} className="text-2xl font-semibold">{nft.name}</p>
                                     <div style={{ overflow: 'hidden' }}>
@@ -69,6 +114,8 @@ export default function MyAssets() {
                                 </div>
                                 <div className="p-4 bg-black">
                                     <p className="text-2xl font-bold text-white">Price - {nft.price} Matic</p>
+                                    {/* <button className="mt-4 w-full bg-blue-500 text-white font-bold py-2 px-12 rounded"
+                                        onClick={() => createSale(nft.tokenId)}>Sell</button> */}
                                 </div>
                             </div>
                         ))

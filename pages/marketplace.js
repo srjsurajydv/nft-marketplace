@@ -24,17 +24,24 @@ export default function Marketplace() {
     const marketContract = new ethers.Contract(nftmarketaddress, Market.abi, provider)
     const data = await marketContract.fetchMarketItems()
     const items = await Promise.all(data.map(async i => {
-      const tokenUri = await tokenContract.tokenURI(i.tokenId)
-      const meta = await axios.get(tokenUri)
+      var tokenUri = await tokenContract.tokenURI(i.tokenId)
+      const tmp = tokenUri.split("//")
+      tokenUri = 'https://ipfs.io/ipfs/' + tmp[1]
+      const meta = await fetch(tokenUri)
+      const json = await meta.json()
       let price = ethers.utils.formatUnits(i.price.toString(), 'ether')
+      const imgLink = json.image
+      const tmp1 = imgLink.split("//")
+      const imgurl = 'https://ipfs.io/ipfs/' + tmp1[1]
+      const imageURL = await axios.get(imgurl)
       let item = {
         price,
         tokenId: i.tokenId.toNumber(),
         seller: i.seller,
         owner: i.owner,
-        image: meta.data.image,
-        name: meta.data.name,
-        description: meta.data.description,
+        image: imageURL.data,
+        name: json.name,
+        description: json.description,
       }
       return item
     }))
@@ -45,7 +52,6 @@ export default function Marketplace() {
   async function buyNft(nft) {
     const web3Modal = new Web3Modal()
     const connection = await web3Modal.connect()
-    console.log("idd1")
     const provider = new ethers.providers.Web3Provider(connection)
     const signer = provider.getSigner()
     const contract = new ethers.Contract(nftmarketaddress, Market.abi, signer)
@@ -70,7 +76,7 @@ export default function Marketplace() {
           {
             nfts.map((nft, i) => (
               <div key={i} className="border shadow rounded-xl overflow-hidden">
-                <img src={nft.image} />
+                <img src={nft.image} width="500" height="500"/>
                 <div className="p-4">
                   <p className="text-2xl font-semibold text-white" style={{ height: '32px' }}>{nft.name}</p>
                   <div style={{ overflow: 'hidden' }}>

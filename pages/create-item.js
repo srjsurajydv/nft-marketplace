@@ -1,23 +1,12 @@
 import { useState } from 'react'
 import { ethers } from 'ethers'
-import { create as ipfsClient } from 'ipfs-http-client'
 import { useRouter } from 'next/router'
 import Web3Modal from 'web3modal'
-import { Buffer } from 'buffer';
+import { NFTStorage, File, Blob, toAsyncIterable } from 'nft.storage'
+const axios = require('axios')
 
-const projectId = '2FTPeYpUlU9cdl8cIbpBu4ZwKPV';
-const projectSecret = 'de29cb16de6c4cf9c9e51ba7ecff0fe3';
-const auth =
-'Basic ' + Buffer.from(projectId + ':' + projectSecret).toString('base64');
-
-const client = ipfsClient({
-  host: 'ipfs.infura.io',
-  port: 5001,
-  protocol: 'https',
-  headers: {
-    authorization: auth,
-  },
-});
+const API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweGJDNjUzZURhN0YwQmJjMjIyZmYyRTEwNTY1QTA5RTQyMjczMDE0NEIiLCJpc3MiOiJuZnQtc3RvcmFnZSIsImlhdCI6MTY2NjQzMTIzNTQwMSwibmFtZSI6Ik5GVCJ9.WWzZhPLZhhS1F9gcbJySMyi5GJwrSUuHZVZrB8mjo1M";
+const client = new NFTStorage({ token: API_KEY })
 
 import {
     nftaddress, nftmarketaddress
@@ -34,13 +23,13 @@ export default function CreateItem() {
     async function onChange(e) {
         const file = e.target.files[0]
         try {
-            const added = await client.add(
+            const added = await client.storeBlob(
                 file,
                 {
                     progress: (prog) => console.log(`received: ${prog}`)
                 }
             )
-            const url = `https://infura-ipfs.io/ipfs/${added.path}`
+            const url = `https://${added}.ipfs.nftstorage.link`
             setFileUrl(url)
         } catch (error) {
             console.log('Error uploading file: ', error)
@@ -54,8 +43,13 @@ export default function CreateItem() {
             name, description, image: fileUrl
         })
         try {
-            const added = await client.add(data)
-            const url = `https://infura-ipfs.io/ipfs/${added.path}`
+            const f = new File([fileUrl], name, { type: 'image/*', })
+            const added = await client.store({
+                name: name,
+                description: description,
+                image: f,
+            })
+            const url = added.url
             createSale(url)
         } catch (error) {
             console.log('Error uploading file: ', error)
@@ -63,32 +57,34 @@ export default function CreateItem() {
     }
 
     async function createSale(url) {
-        const web3Modal = new Web3Modal()
-        const connection = await web3Modal.connect()
-        const provider = new ethers.providers.Web3Provider(connection)
-        const signer = provider.getSigner()
+        try {
+            const web3Modal = new Web3Modal()
+            const connection = await web3Modal.connect()
+            const provider = new ethers.providers.Web3Provider(connection)
+            const signer = provider.getSigner()
 
-        let contract = new ethers.Contract(nftaddress, NFT.abi, signer)
-        let transaction = await contract.createToken(url)
-        let tx = await transaction.wait()
+            let contract = new ethers.Contract(nftaddress, NFT.abi, signer)
+            let transaction = await contract.createToken(url)
+            let tx = await transaction.wait()
 
-        let event = tx.events[0]
-        let value = event.args[2]
-        let tokenId = value.toNumber()
+            let event = tx.events[0]
+            let value = event.args[2]
+            let tokenId = value.toNumber()
 
-        const price = ethers.utils.parseUnits(formInput.price, 'ether')
+            const price = ethers.utils.parseUnits(formInput.price, 'ether')
 
-        contract = new ethers.Contract(nftmarketaddress, Market.abi, signer)
-        let listingPrice = await contract.getListingPrice()
-        listingPrice = listingPrice.toString()
+            contract = new ethers.Contract(nftmarketaddress, Market.abi, signer)
+            let listingPrice = await contract.getListingPrice()
+            listingPrice = listingPrice.toString()
 
-        transaction = await contract.createMarketItem(
-            nftaddress, tokenId, price, { value: listingPrice }
-        )
-
-        await transaction.wait()
-        router.push('/')
-
+            transaction = await contract.createMarketItem(
+                nftaddress, tokenId, price, { value: listingPrice }
+            )
+            await transaction.wait()
+            router.push('/marketplace')
+        } catch (error) {
+            alert("Transaction Failed \nPlease try again.")
+        }
     }
 
     return (

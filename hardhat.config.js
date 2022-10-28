@@ -1,7 +1,7 @@
 require("@nomiclabs/hardhat-waffle");
-
 const fs = require("fs")
-const privateKey = fs.readFileSync(".secret").toString()
+
+const privateKey = fs.readFileSync(".secret").toString();
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
@@ -11,10 +11,14 @@ module.exports = {
     },
     mumbai: {
       url: `https://polygon-mumbai.g.alchemy.com/v2/lomagLtFAAR6wLySr-jvAKkEuaTWIWw6`,
+      gasPrice: 20000000000,
+      gas: 6000000,
       accounts: [privateKey]
     },
     mainnet: {
-      url: `https://mainnet.infura.io/v3/51c75e51bc8146ccb48744fce376dfb7`,
+      url: `https://polygon-mainnet.infura.io/v3/b810a8e018e24658b42bf8579c1645f0`,
+      gasPrice: 20000000000,
+      gas: 6000000,
       accounts: [privateKey]
     }
   },

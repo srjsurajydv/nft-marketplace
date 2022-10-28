@@ -20,6 +20,15 @@ export default function CreatorDashboard() {
         loadNFTs()
     }, [])
 
+    // useEffect(() => {
+    //     if (window.ethereum) {
+       
+    //       window.ethereum.on("accountsChanged", () => {
+    //         window.location.reload();
+    //       });
+    //     }
+    //   });
+
     async function loadNFTs() {
         const web3Modal = new Web3Modal()
         const connection = await web3Modal.connect()
@@ -31,21 +40,28 @@ export default function CreatorDashboard() {
         const data = await marketContract.fetchItemsCreated()
 
         const items = await Promise.all(data.map(async i => {
-            const tokenUri = await tokenContract.tokenURI(i.tokenId)
-            const meta = await axios.get(tokenUri)
+            var tokenUri = await tokenContract.tokenURI(i.tokenId)
+            const tmp = tokenUri.split("//")
+            tokenUri = 'https://ipfs.io/ipfs/' + tmp[1]
+            const meta = await fetch(tokenUri)
+            const json = await meta.json()
             let price = ethers.utils.formatUnits(i.price.toString(), 'ether')
+            const imgLink = json.image
+            const tmp1 = imgLink.split("//")
+            const imgurl = 'https://ipfs.io/ipfs/' + tmp1[1]
+            const imageURL = await axios.get(imgurl)
             let item = {
-                price,
-                tokenId: i.tokenId.toNumber(),
-                seller: i.seller,
-                owner: i.owner,
-                sold: i.sold,
-                image: meta.data.image,
-                name: meta.data.name,
-                description: meta.data.description,
+              price,
+              tokenId: i.tokenId.toNumber(),
+              seller: i.seller,
+              owner: i.owner,
+              sold: i.sold,
+              image: imageURL.data,
+              name: json.name,
+              description: json.description,
             }
             return item
-        }))
+          }))
 
         const soldItems = items.filter(i => i.sold)
         setSold(soldItems)
@@ -53,9 +69,9 @@ export default function CreatorDashboard() {
         setLoadingState('loaded')
     }
 
-    // if (loadingState === 'loaded' && !nfts.length) return (
-    //     <h1 className="py-10 px-20 text-3xl">No NFTs listed</h1>
-    // )
+    if (loadingState === 'loaded' && !nfts.length) return (
+        <h1 className="py-10 px-20 text-3xl">No NFTs listed</h1>
+    )
 
     return (
         <div style={{ backgroundColor: '#1a1a1a' }}>
@@ -65,7 +81,7 @@ export default function CreatorDashboard() {
                     {
                         nfts.map((nft, i) => (
                             <div key={i} className="border shadow rounded-xl overflow-hidden">
-                                <img src={nft.image} className="rounded" />
+                                <img src={nft.image} className="rounded" width="500" height="500"/>
                                 <div className="p-4">
                                     <p style={{ height: '32px' }} className="text-2xl font-semibold">{nft.name}</p>
                                     <div style={{ overflow: 'hidden' }}>
@@ -89,7 +105,7 @@ export default function CreatorDashboard() {
                                 {
                                     sold.map((nft, i) => (
                                         <div key={i} className="border shadow rounded-xl overflow-hidden">
-                                            <img src={nft.image} className="rounded" />
+                                            <img src={nft.image} className="rounded" width="500" height="500"/>
                                             <div className="p-4">
                                                 <p style={{ height: '32px' }} className="text-2xl font-semibold">{nft.name}</p>
                                                 <div style={{ overflow: 'hidden' }}>

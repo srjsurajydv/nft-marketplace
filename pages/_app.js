@@ -1,5 +1,4 @@
 import '../styles/globals.css'
-import Link from 'next/link'
 
 function MyApp({ Component, pageProps }) {
   return (
@@ -7,7 +6,7 @@ function MyApp({ Component, pageProps }) {
       <nav className="p-3 bg-stone-800">
         <div className="flex mt-1">
           <img src="https://assets.upstox.com/content/dam/aem-content-integration/assets/images/logos/LTI/square_LTI_com.png" width="40" height="40" alt="LTI" />
-          <p className="text-3xl text-white font-mono">&nbsp;NFT Marketplace</p>
+          <p className="text-3xl text-white font-bold font-mono">&nbsp;NFT Marketplace</p>
           <div className="hidden sm:ml-6 sm:block">
             <div className="flex space-x-4 ml-8">
 
