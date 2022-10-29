@@ -77,7 +77,7 @@ export default function CreateItem() {
             let listingPrice = await contract.getListingPrice()
             listingPrice = listingPrice.toString()
 
-            transaction = await contract.createMarketItem(
+            transaction = await contract.mintNFT(
                 nftaddress, tokenId, price, { value: listingPrice }
             )
             await transaction.wait()
@@ -88,7 +88,7 @@ export default function CreateItem() {
     }
 
     return (
-        <div className="flex justify-center" style={{ backgroundColor: '#1a1a1a', minHeight: '530px' }}>
+        <div className="flex justify-center" style={{ backgroundColor: '#000033' }}>
             <div className="w-1/2 flex flex-col pb-12">
                 <input
                     placeholder="Asset Name"

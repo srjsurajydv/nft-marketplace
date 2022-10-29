@@ -25,15 +25,12 @@ export default function Marketplace() {
     const data = await marketContract.fetchMarketItems()
     const items = await Promise.all(data.map(async i => {
       var tokenUri = await tokenContract.tokenURI(i.tokenId)
-      const tmp = tokenUri.split("//")
-      tokenUri = 'https://ipfs.io/ipfs/' + tmp[1]
+      tokenUri = tokenUri.replace('ipfs://','https://ipfs.io/ipfs/')
       const meta = await fetch(tokenUri)
       const json = await meta.json()
       let price = ethers.utils.formatUnits(i.price.toString(), 'ether')
-      const imgLink = json.image
-      const tmp1 = imgLink.split("//")
-      const imgurl = 'https://ipfs.io/ipfs/' + tmp1[1]
-      const imageURL = await axios.get(imgurl)
+      const imgLink = json.image.replace('ipfs://','https://ipfs.io/ipfs/')
+      const imageURL = await axios.get(imgLink)
       let item = {
         price,
         tokenId: i.tokenId.toNumber(),
@@ -66,11 +63,13 @@ export default function Marketplace() {
   }
 
   if (loadingState === 'loaded' && !nfts.length) return (
-    <h1 className="px-20 py-10 text-3xl">No items in marketplace</h1>
+    <div style={{ backgroundColor: '#000033' }}>
+      <p className="px-20 py-10 text-3xl font-semibold text-white">No NFT in marketplace</p>
+    </div>
   )
 
   return (
-    <div className="flex justify-center" style={{ backgroundColor: '#1a1a1a' }}>
+    <div className="flex justify-center" style={{ backgroundColor: '#000033' }}>
       <div className="px-4" style={{ maxWidth: '1600px' }}>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4">
           {

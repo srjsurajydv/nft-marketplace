@@ -20,14 +20,14 @@ export default function CreatorDashboard() {
         loadNFTs()
     }, [])
 
-    // useEffect(() => {
-    //     if (window.ethereum) {
-       
-    //       window.ethereum.on("accountsChanged", () => {
-    //         window.location.reload();
-    //       });
-    //     }
-    //   });
+    useEffect(() => {
+        if (window.ethereum) {
+
+            window.ethereum.on("accountsChanged", () => {
+                window.location.reload();
+            });
+        }
+    });
 
     async function loadNFTs() {
         const web3Modal = new Web3Modal()
@@ -41,27 +41,24 @@ export default function CreatorDashboard() {
 
         const items = await Promise.all(data.map(async i => {
             var tokenUri = await tokenContract.tokenURI(i.tokenId)
-            const tmp = tokenUri.split("//")
-            tokenUri = 'https://ipfs.io/ipfs/' + tmp[1]
+            tokenUri = tokenUri.replace('ipfs://', 'https://ipfs.io/ipfs/')
             const meta = await fetch(tokenUri)
             const json = await meta.json()
             let price = ethers.utils.formatUnits(i.price.toString(), 'ether')
-            const imgLink = json.image
-            const tmp1 = imgLink.split("//")
-            const imgurl = 'https://ipfs.io/ipfs/' + tmp1[1]
-            const imageURL = await axios.get(imgurl)
+            const imgLink = json.image.replace('ipfs://', 'https://ipfs.io/ipfs/')
+            const imageURL = await axios.get(imgLink)
             let item = {
-              price,
-              tokenId: i.tokenId.toNumber(),
-              seller: i.seller,
-              owner: i.owner,
-              sold: i.sold,
-              image: imageURL.data,
-              name: json.name,
-              description: json.description,
+                price,
+                tokenId: i.tokenId.toNumber(),
+                seller: i.seller,
+                owner: i.owner,
+                sold: i.sold,
+                image: imageURL.data,
+                name: json.name,
+                description: json.description,
             }
             return item
-          }))
+        }))
 
         const soldItems = items.filter(i => i.sold)
         setSold(soldItems)
@@ -70,18 +67,20 @@ export default function CreatorDashboard() {
     }
 
     if (loadingState === 'loaded' && !nfts.length) return (
-        <h1 className="py-10 px-20 text-3xl">No NFTs listed</h1>
+        <div style={{ backgroundColor: '#000033' }}>
+            <p className="px-20 py-10 text-3xl font-semibold text-white">No NFTs listed</p>
+        </div>
     )
 
     return (
-        <div style={{ backgroundColor: '#1a1a1a' }}>
-            <div className="p-4">
+        <div style={{ backgroundColor: '#000033' }}>
+            <div className="p-4 text-white">
                 <h2 className="text-2xl py-2 text-white">Items Created</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4">
                     {
                         nfts.map((nft, i) => (
                             <div key={i} className="border shadow rounded-xl overflow-hidden">
-                                <img src={nft.image} className="rounded" width="500" height="500"/>
+                                <img src={nft.image} className="rounded" width="500" height="500" />
                                 <div className="p-4">
                                     <p style={{ height: '32px' }} className="text-2xl font-semibold">{nft.name}</p>
                                     <div style={{ overflow: 'hidden' }}>
@@ -105,7 +104,7 @@ export default function CreatorDashboard() {
                                 {
                                     sold.map((nft, i) => (
                                         <div key={i} className="border shadow rounded-xl overflow-hidden">
-                                            <img src={nft.image} className="rounded" width="500" height="500"/>
+                                            <img src={nft.image} className="rounded" width="500" height="500" />
                                             <div className="p-4">
                                                 <p style={{ height: '32px' }} className="text-2xl font-semibold">{nft.name}</p>
                                                 <div style={{ overflow: 'hidden' }}>

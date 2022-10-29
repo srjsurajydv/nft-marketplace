@@ -20,8 +20,8 @@ describe("NFTMarket", function () {
     await nft.createToken("https://www.mytokenlocation.com")
     await nft.createToken("https://www.mytokenlocation2.com")
 
-    await market.createMarketItem(nftContractAddress, 1, auctionPrice, { value: listingPrice })
-    await market.createMarketItem(nftContractAddress, 2, auctionPrice, { value: listingPrice })
+    await market.mintNFT(nftContractAddress, 1, auctionPrice, { value: listingPrice })
+    await market.mintNFT(nftContractAddress, 2, auctionPrice, { value: listingPrice })
 
     const [_, buyerAddress] = await ethers.getSigners()
 
